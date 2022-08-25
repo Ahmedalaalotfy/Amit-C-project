@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#define  NUM 3
-typedef unsigned int uint8 ;
-int entryno =0 ;
-bool SDB_AddEntry(uint8 id, uint8 year, uint8* subjects, uint8* grades) ;
-bool SDB_ReadEntry(uint8 id);
-bool SDB_IsFull(void);
-uint8 SDB_GetUsedSize(void) ;
+#include "headers.h"
+#define  NUM 4
+
+uint8 counter=0 ;
 
 struct SimpleDb
 {
@@ -25,9 +22,10 @@ struct SimpleDb
 int main()
 {
     unsigned int tsk ;
-    uint8 i , x , y;
+    uint8 i , x , y , z , a;
     uint8  year , id ;
     uint8 subjects[3] , grades [3] ;
+    uint8 list[NUM] ;
 
 Tasks :
     printf("\n\nChoose Task To Accomplish :");
@@ -70,6 +68,22 @@ Task_2 :
          break ;
          case 3 :
 Task_3 :
+            z = SDB_IsFull();
+            if (z==1)
+            {
+                printf("Database is Full \nyou can delete IDs");
+                printf("\ntype (1) to Delete An Existing ID");
+                printf("\ntype (0) to Return to Tasks : ");
+                scanf("%d",&a);
+                if(a==1)
+                {
+                    goto Task_4;
+                }
+                else
+                {
+                    goto Tasks ;
+                }
+            }
 
             printf("\nStudent ID   : ");
             scanf ("%d",&id);
@@ -77,6 +91,13 @@ Task_3 :
                 {
                   printf("\nID can not be zero , try again : ");
                   scanf("%d",&id);
+                }
+               y = SDB_IsIdExist(id);
+
+               if (y==1)
+                {
+                  printf("\nID is already exists , try again : ");
+                  goto Task_3;
                 }
 
             printf("StudentYear : ");
@@ -100,7 +121,7 @@ Task_3 :
             if (check == 1)
             {
                printf("\nthe entry is added successfully .");
-               entryno++ ;
+               counter++ ;
             }
             else
             {
@@ -122,7 +143,27 @@ Task_3 :
          break ;
          case 4 :
 Task_4 :
-         //void SDB_DeleteEntry(uint8 id)
+         printf("\nPlease Enter ID to Delete : ");
+         scanf("%d",&x);
+          while (x==0)
+         {
+          printf("\nID can not be zero , try again : ");
+          scanf("%d",&x);
+         }
+         y = SDB_IsIdExist(x) ;
+
+         if (y==1)
+         {
+              SDB_DeleteEntry(x) ;
+              counter-- ;
+         }
+         else if (y==0)
+         {
+             printf("\nID %d is Not exsit",x);
+             goto Tasks ;
+         }
+
+         goto Tasks ;
          break ;
 
          case 5 :
@@ -139,8 +180,8 @@ Task_5:
 
          if (y==0)
          {
-             printf("\nNot founded ! , try again :");
-             goto Task_5 ;
+             printf("\nNot founded !");
+             goto Tasks ;
          }
 
          goto Tasks ;
@@ -148,19 +189,53 @@ Task_5:
 
          case 6 :
 Task_6 :
-         //void SDB_GetIdList(uint8* count, uint8* list)
+         for(i=0 ; i< NUM ; i++)
+         {
+             list[i]=0 ;
+         }
 
+         SDB_GetIdList(&counter , list) ;
+         printf("\nThe List Of IDs : ");
+
+         int n=1;
+         for (i=0 ; i<NUM ; i++)
+         {
+             if (list[i]!=0)
+             {
+                printf("\n ID Of (%d) : %d ",n++,list[i]);
+             }
+         }
+         goto  Tasks ;
          break ;
 
          case 7 :
 Task_7 :
-         //bool SDB_IsIdExist(uint8 ID)
 
+    printf("\nPlease Enter ID to check : ");
+    scanf("%d",&x);
+    while (x==0)
+    {
+      printf("\nID Can Not Be Zero ,Please Enter ID to check : ");
+      scanf("%d",&x);
+    }
+
+         y = SDB_IsIdExist(x) ;
+
+         if (y==1)
+         {
+             printf("\nID %d is exsit",x);
+         }
+         else if (y==0)
+         {
+             printf("\nID %d is Not exsit",x);
+         }
+         goto Tasks;
          break ;
 
          case 8 :
 Task_8 :
         printf("Say my name !");
+        return 0 ;
         break ;
 
         default :
@@ -176,14 +251,23 @@ Task_8 :
 
 bool SDB_AddEntry(uint8 id, uint8 year, uint8* subjects, uint8* grades)
 {
-   ent[entryno].student_ID = id ;
-   ent[entryno].student_Year = year ;
-   ent[entryno].Course_1_ID = *subjects ;
-   ent[entryno].Course_1_Grade = *grades ;
-   ent[entryno].Course_2_ID = *(subjects+1) ;
-   ent[entryno].Course_2_Grade = *(grades+1) ;
-   ent[entryno].Course_3_ID = *(subjects+2) ;
-   ent[entryno].Course_3_Grade = *(grades+2) ;
+    int i ;
+    for (i=0 ; i<NUM ; i++)
+    {
+        if(ent[i].student_ID==0)
+        {
+            break ;
+        }
+    }
+   ent[i].student_ID = id ;
+   ent[i].student_Year = year ;
+   ent[i].Course_1_ID = *subjects ;
+   ent[i].Course_1_Grade = *grades ;
+   ent[i].Course_2_ID = *(subjects+1) ;
+   ent[i].Course_2_Grade = *(grades+1) ;
+   ent[i].Course_3_ID = *(subjects+2) ;
+   ent[i].Course_3_Grade = *(grades+2) ;
+
 
    return true ;
 }
@@ -244,4 +328,52 @@ uint8 SDB_GetUsedSize(void)
        }
    }
    return n ;
+}
+
+bool SDB_IsIdExist(uint8 id)
+{
+    int i ;
+    for (i=0 ; i<NUM ;i++)
+    {
+        if(id==ent[i].student_ID)
+        {
+            return true ;
+        }
+    }
+    return false ;
+}
+
+void SDB_DeleteEntry(uint8 id)
+{
+    int i , temp ;
+    for ( i =0 ; i<NUM ; i++)
+    {
+        if(id==ent[i].student_ID)
+        {
+            temp = ent[i].student_ID ;
+            ent[i].student_ID = 0 ;
+            ent[i].student_Year = 0 ;
+            ent[i].Course_1_ID = 0 ;
+            ent[i].Course_1_Grade = 0 ;
+            ent[i].Course_2_ID = 0 ;
+            ent[i].Course_2_Grade = 0 ;
+            ent[i].Course_3_ID = 0 ;
+            ent[i].Course_3_Grade = 0 ;
+            break;
+        }
+    }
+    printf("\nID %d is Deleted",temp);
+}
+
+void SDB_GetIdList(uint8* count, uint8* list)
+{
+    int i ;
+    for ( i = 0 ; i <NUM ; i++)
+    {
+        if(ent[i].student_ID!=0)
+        {
+           *(count) ++ ;
+           list[i]=ent[i].student_ID ;
+        }
+    }
 }
